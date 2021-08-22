@@ -231,12 +231,15 @@ def _do_mask_python_eval(data_loader):
     annopath = data_loader.dataset.all_labels_path
 
     classes = data_loader.dataset._transforms.transforms[0].CLASSES
+
+    iou_thresh = 0.5
     aps = []
     for cls in classes:
         if cls == 'Unknown':
             continue
         filename = '/tmp/mask/results/det_test_{:s}.txt'.format(cls)
         rec, prec, ap = mask_eval(cls, filename, imagesetfile, annopath,
-                                  ovthresh=0.5, use_07_metric=True)
+                                  ovthresh=iou_thresh, use_07_metric=True)
         aps += [ap]
-    print('Mean AP = {:.4f}        '.format(np.mean(aps)))
+    print("ap_list=",aps)
+    print('iou[{:.2f}]s Mean AP = {:.4f}        '.format(iou_thresh,np.mean(aps)))

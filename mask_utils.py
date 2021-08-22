@@ -30,35 +30,6 @@ class ConvertMasktoCOCO(object):
             classes.append(self.CLASSES.index(object.find("name").text))
             boxes.append([xmin,ymin,xmax,ymax])
 
-        # filename = label_path.split('\\')[-1]
-        # filename = filename.split('.')[0]
-        #
-        #
-        # f = open(label_path, 'r')
-        #
-        # boxes = []
-        # classes = []
-        #
-        # lines = f.readlines()
-        #
-        # for line in lines[1:]:
-        #     line = line.strip()  # delete line feed
-        #     line = line.split(" ")
-        #
-        #     try:
-        #         classes.append(self.CLASSES.index(line[0]))
-        #     except:
-        #         print(line[0])
-        #         print(self.CLASSES.index(line[0]))
-        #         raise Exception("Hell what the")
-        #
-        #     # classes.append(self.CLASSES.index(line[0]))
-        #     line = np.array(line[1:5], dtype="int64")
-        #     # x, y, w, h
-        #     bbox = [n - 1 for n in [line[0], line[1], line[0] + line[2], line[1] + line[3]]]
-        #     boxes.append(bbox)
-        # f.close()
-
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         classes = torch.as_tensor(classes)
         if boxes.shape[0] < 1:
@@ -72,12 +43,10 @@ class ConvertMasktoCOCO(object):
 
 class MaskDetection(VisionDataset):
     def __init__(self, img_folder, image_set, transforms = None):
-        print("-"*30+"\n","ExDarkDetection Init")
-        print(img_folder, image_set, transforms)
         self.root = img_folder
         self.image_set = image_set
         self.all_images_path = glob.glob(os.path.join(img_folder,image_set,"images","*"))
-        self.all_labels_path = glob.glob(os.path.join(img_folder,image_set,"labels","*"))
+        self.all_labels_path = glob.glob(os.path.join(img_folder,image_set,"xml_labels","*"))
 
         self._transforms = transforms
 
@@ -97,25 +66,23 @@ class MaskDetection(VisionDataset):
         data_path = self.all_images_path[idx]
 
         img = Image.open(data_path)
-        return img.size
+        return img.size[1], img.size[0]
 
     def __len__(self):
         return len(self.all_images_path)
 
-# get exdark dataset
+# get Mask dataset
 def get_Mask(root, image_set, transforms):
     t = [ConvertMasktoCOCO()]
-    print(t)
     if transforms is not None:
         t.append(transforms)
     transforms = T.Compose(t)
 
     if image_set == "train":
-        print("Create Train Dataset Mask")
+        print("Train Dataset is Initialized", t)
         dataset = MaskDetection(img_folder=root,image_set=image_set, transforms=transforms)
     else:
-        print("Create Test Dataset Mask")
+        print("Test Dataset is Initialized", t)
         dataset = MaskDetection(img_folder=root, image_set=image_set, transforms=transforms)
-    print("----" * 25)
 
     return dataset

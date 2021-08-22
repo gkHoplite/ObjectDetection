@@ -40,6 +40,7 @@ from engine import train_one_epoch, coco_evaluate, voc_evaluate, ekdark_evaluate
 import presets
 import utils
 import cv2
+from PIL import Image, ImageDraw
 
 save_model_pth_name = "model"
 save_checkpoint_pth_name = "checkpoint"
@@ -225,15 +226,16 @@ def main(args):
         elif 'ExDark' in args.dataset:
             ekdark_evaluate(model, data_loader_test, device=device)
         elif 'mask' in args.dataset:
+            import cal_mAP
+            cal_mAP.test_evaluate(model, data_loader_test, device=device)
             mask_evaluate(model, data_loader_test, device=device)
         return
 
-    if args.visualize_only: # python train.py --resume model_25.pth --visualize-only
+    if args.visualize_only:
         model.eval()
         cpu_device = torch.device("cpu")
         
         threshold = 0.7
-        check_image_count = 10
         if 'voc' in args.dataset:
             class_names = ("__background__", "aeroplane", "bicycle", "bird", "boat", "bottle",
             "bus", "car", "cat", "chair", "cow",
@@ -247,7 +249,6 @@ def main(args):
         elif 'mask' in args.dataset:
             class_names = ("Unknwon", "with_mask", "without_mask")
 
-        cnt = 0
         with torch.no_grad():
             for images, targets in data_loader_test:
                 images = list(img.to(device) for img in images)
@@ -258,33 +259,24 @@ def main(args):
                 outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
                 targets = [{k: v.to(cpu_device) for k, v in t.items()} for t in targets]
 
-                # print(outputs, targets)
-
                 for img, output, target in zip(images, outputs, targets):
-                    # c, w, h -> w, h, c  / transpose axis -> 0, 1, 2 -> 1, 2, 0
-                    img = img.cpu().numpy().transpose(1, 2, 0).copy()
+                    # color width height -> width height colr
+                    img = img.mul(255).permute(1,2,0).to('cpu',torch.uint8).numpy()
+                    img = Image.fromarray(img)
+                    img_draw = ImageDraw.Draw(img)
 
-                    # cv2 = BGR, PIL RGB
-                    img = img[:, :, [2, 1, 0]].copy()
-
-                    for point, score, label in zip(output["boxes"], output["scores"], output["labels"]):
+                    for edge, score, label in zip(output["boxes"], output["scores"], output["labels"]):
                         if score < threshold: continue
-                        point = point.type(torch.IntTensor).numpy()
-                        # x, y / x + w, y + h
-                        img = cv2.rectangle(img, (point[0], point[1]), (point[2], point[3]), (0, 0, 255), 1)
-                        img = cv2.putText(img, class_names[label], (point[0] + 2, point[1] - 11), 0, 0.5, (0, 0, 255), 2)
+                        edge = edge.type(torch.IntTensor).numpy()
+                        img_draw.rectangle([edge[0],edge[1],edge[2],edge[3]], outline=(0,255,0))
+                        img_draw.text([edge[0],edge[1]+10], class_names[label], fill=(0,255,0))
 
-                    for point, label in zip(target["boxes"], target["labels"]):
-                        point = point.type(torch.IntTensor).numpy()
-                        img = cv2.rectangle(img, (point[0], point[1]), (point[2], point[3]), (0, 255, 0), 1)
-                        img = cv2.putText(img, class_names[label], (point[0] + 2, point[1] - 11), 0, 0.5, (0, 255, 0), 2)
-
-                    cv2.imshow(f"red: prediction / green: label / threshold: {threshold}", img)
-                    cv2.waitKey()
-
-                    cnt += 1
-                    if cnt == check_image_count:
-                        exit()
+                    for edge, label in zip(target["boxes"], target["labels"]):
+                        edge = edge.type(torch.IntTensor).numpy()
+                        img_draw.rectangle([edge[0],edge[1],edge[2],edge[3]],outline=(255,0,0))
+                        img_draw.text([edge[0],edge[1]-10], class_names[label], fill=(255,0,0))
+                    img.show()
+        exit()
 
     print("Start training")
     start_time = time.time()
@@ -316,6 +308,8 @@ def main(args):
         elif 'ExDark' in args.dataset:
             ekdark_evaluate(model, data_loader_test, device=device)
         elif 'mask' in args.dataset:
+            # import cal_mAP
+            # cal_mAP.test_evaluate(model, data_loader_test, device=device)
             mask_evaluate(model, data_loader_test, device=device)
 
     total_time = time.time() - start_time

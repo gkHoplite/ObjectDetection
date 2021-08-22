@@ -28,9 +28,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
     for images, targets in metric_logger.log_every(data_loader, print_freq, header):
         images = list(image.to(device) for image in images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
         loss_dict = model(images, targets)
-
         losses = sum(loss for loss in loss_dict.values())
 
         # reduce losses over all GPUs for logging purposes
@@ -294,26 +292,3 @@ def mask_evaluate(model, data_loader, device):
                                 data_loader.dataset._transforms.transforms[0].CLASSES)
         _do_mask_python_eval(data_loader)
     torch.set_num_threads(n_threads)
-
-def mask_simple_evaluate(model, data_loader, device):
-    n_threads = torch.get_num_threads()
-    torch.set_num_threads(1)
-    cpu_device = torch.device("cpu")
-    model.eval()
-    metric_logger = utils.MetricLogger(delimiter="  ")
-    header = 'Test:'
-
-    all_boxes = [[] for i in range(13)]
-    image_index = []
-    for image, targets in metric_logger.log_every(data_loader, 100, header):
-        image = list(img.to(device) for img in image)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        torch.cuda.synchronize()
-        model_time = time.time()
-        outputs = model(image)
-
-        name = ''.join([chr(i) for i in targets[0]['name'].tolist()])
-        image_index.append(name)
-
-        outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
