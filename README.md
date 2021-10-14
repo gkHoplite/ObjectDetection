@@ -1,3 +1,10 @@
+# 설명 
+TorchVision에서 가져온 코드를 마스크 착용/미착용 검사에 사용하였습니다. [TorchVision](https://github.com/pytorch/vision)
+
+# 사용법
+- train.py --visualize-only --data-path C:/파일경로를 설정해줄 수 있습니다.
+- 그 외 다양한 변수 설정은 train.py에 있는 def get_args_parser(add_help=True)에서 확인할 수 있습니다.
+
 # Object detection reference training scripts
 
 - Exclusively-Dark-Image-Dataset [Github url](https://github.com/cs-chan/Exclusively-Dark-Image-Dataset/tree/master/Dataset)
