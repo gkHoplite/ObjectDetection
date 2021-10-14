@@ -1,7 +1,7 @@
 # 설명 
-Object Detection, TorchVision에서 가져온 코드를 마스크 착용/미착용 검사에 사용하였습니다. [TorchVision](https://github.com/pytorch/vision)
-ObjectTracking은 [DeepSort](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch)를 사용하였습니다.
-이 Repository는 Object Detection Code만 포함하고 있습니다.
+- Object Detection, TorchVision에서 가져온 코드를 마스크 착용/미착용 검사에 사용하였습니다. [TorchVision](https://github.com/pytorch/vision)
+- ObjectTracking을 사용하기 원한다면 -> [DeepSort](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch)를 사용하였습니다.
+- 이 Repository는 Object Detection Code만 포함하고 있습니다.
 
 # 훈련
 - Kaggle 마스크 데이터셋과 Youtube에 있는 거리 촬영영상을 Cvat에서 Labeling하여 데이터를 구축하였습니다.
